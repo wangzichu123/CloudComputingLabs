@@ -40,33 +40,13 @@ void input(const char in[N],int* board)
     board[cell] = in[cell] - '0';
     assert(0 <= board[cell] && board[cell] <= NUM);
     if(DEBUG_MODE)
-    printf("%d",board[cell]); //æ‰“å°è¯»å…¥çš„é¢˜
+    printf("%d",board[cell]);
   }
   if(DEBUG_MODE)
-  printf("\n"); //æ‰“å°è¯»å…¥çš„é¢˜
+  printf("\n");
 }
 
-void* ReaderFuction(void* args) 
-{
-   fp = fopen(fileName, "r"); 
-   while (fgets(puzzle, sizeof puzzle, fp) != NULL) 
-   {    pthread_mutex_lock(&totalmutex);
-    	if (strlen(puzzle) >= N) 
-   	{	
-      		++total;
-      		job_t j1;
-      		j1.puzzleNo = total;
-      		input(puzzle,j1.board); 
-                job_queue.push(j1);
-         }
-	pthread_mutex_unlock(&totalmutex);
-   }
-   if(DEBUG_MODE)
-   printf("è¯»æ–‡ä»¶å®Œæ¯•");
-   fclose(fp);
-}
-
-void* SolveFuction(void* args) 
+void* Solve(void* args) 
 {
     while(1)
     {
@@ -85,19 +65,32 @@ void* SolveFuction(void* args)
 	   result_queue.push(t);
         }
 	else 
-        {  //solveè¿”å›žäº†false è¡¨ç¤ºæ— è§£
+        { 
            printf("No: ");
 	   for(int j=0;j<81;j++)
           	printf("%d",t.board[j]);		
 	   printf("\n");
-        }
-			
+        }	
     }
 }
 
 int main(int argc, char* argv[])
 {
-  
+  fp = fopen(fileName, "r"); 
+   while (fgets(puzzle, sizeof puzzle, fp) != NULL) 
+   {    
+    	if (strlen(puzzle) >= N) 
+   	{	
+      		++total;
+      		job_t j1;
+      		j1.puzzleNo = total;
+      		input(puzzle,j1.board); 
+                job_queue.push(j1);
+         }
+   }
+   if(DEBUG_MODE)
+   printf("¶ÁÎÄ¼þÍê±Ï");
+   fclose(fp);
   if (argv[1] != NULL)
   	numOfSolveThread = atoi(argv[1]);
 
@@ -119,7 +112,7 @@ int main(int argc, char* argv[])
   }
   for(int i=0;i<numOfSolveThread;i++)
   {
-    if(pthread_create(&SolveThread[i], NULL, SolveFuction, NULL)!=0)
+    if(pthread_create(&SolveThread[i], NULL, Solve, NULL)!=0)
     {
          perror("pthread_create failed");
          exit(1);
@@ -129,11 +122,10 @@ int main(int argc, char* argv[])
   pthread_join(ReaderThread, NULL); 
   for(int i=0;i<numOfSolveThread;i++)
       pthread_join(SolveThread[i], NULL);  
-	
-  // SolveThread finish
+
   FILE * fp1;
   char resultFile[20];
-  printf("è¯·è¾“å…¥ç»“æžœæ–‡ä»¶å: ");
+  printf("ÇëÊäÈë½á¹ûÎÄ¼þÃû: ");
   cin>>resultFile;
   fp1 = fopen(resultFile, "r");
   while(!result_queue.empty())

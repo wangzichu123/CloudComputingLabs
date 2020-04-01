@@ -1,3 +1,12 @@
-A backtracking sudoku solver, four algorithms are shown.
+与老师给的代码相比，添加了如下3个文件：
+#main_multhr.cc文件  数独求解主函数，其中的很多函数参考了老师给的DynamicAssignJob代码
+#sudo_dancing_links_multhr.cc 在sudo_dancing_links代码的基础上将board从全局变量变成了输入参数，以更好地适应多线程处理
+#sudokumulthr.h  对照着上面2个文件，对sudoku.h做了适当增添
 
-test cases are from http://people.csse.uwa.edu.au/gordon/sudokumin.php
+运行方法：
+使用“make”命令编译全部文件，生成 sudoku、sudoku_solve可执行文件
+使用“make clean”命令，删除sudoku、sudoku_solve可执行文件
+单线程: 输入形如“./sudoku  test1  d”
+多线程：输入“./sudoku_solve”，接着可以一行一行的输入形如“./test1”,按CTRL+D结束
+
+具体请参照代码

@@ -8,3 +8,5 @@ sudoku: main.cc neighbor.cc sudoku_basic.cc sudoku_min_arity.cc sudoku_min_arity
 	
 sudoku_solve: main_multhr.cc  sudoku_dancing_links_multhr.cc
 	g++ -O2 -pthread -o $@ $^
+clean:
+	-rm sudoku sudoku_solve
