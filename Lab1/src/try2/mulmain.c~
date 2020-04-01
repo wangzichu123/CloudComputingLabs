@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
          }
    }
    if(DEBUG_MODE)
-   printf("读文件完毕");
+   printf("finish);
    fclose(fp);
   if (argv[1] != NULL)
   	numOfSolveThread = atoi(argv[1]);
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 
   FILE * fp1;
   char resultFile[20];
-  printf("请输入结果文件名: ");
+  printf("file name ");
   cin>>resultFile;
   fp1 = fopen(resultFile, "r");
   while(!result_queue.empty())
