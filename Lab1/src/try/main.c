@@ -9,18 +9,31 @@
 #include <queue>
 #include <vector>
 #include <iostream>
-#include "mulsudoku.h"
+#include "sudoku.h"
 using namespace std;
 
 int numOfSolveThread = 2;
 int total_solved = 0;
 int total = 0;
-bool (*solve)(int,job_t&) = mulsolve_sudoku_dancing_links;
-FILE* fp;
+bool (*solve)(int,int*) = solve_sudoku_dancing_links;
 char fileName[20];
 char puzzle[128];
+FILE* fp;
+
+struct job_t
+{
+	int No;	//题目在输入文件中的编号
+	int board[81];  //题目
+};
 
 queue<struct job_t> job_queue;
+struct cmp
+{
+    bool operator() (job_t job1,job_t job2)      //最小编号优先级最高
+    {
+        return job1.No > job2.No;
+    }
+};
 priority_queue<struct job_t,vector<struct job_t>,cmp> result_queue;
 
 pthread_mutex_t jobQueueMutex=PTHREAD_MUTEX_INITIALIZER;
@@ -50,16 +63,15 @@ void* ReaderFuction(void* args)
 {
    fp = fopen(fileName, "r"); 
    while (fgets(puzzle, sizeof puzzle, fp) != NULL) 
-   {    pthread_mutex_lock(&totalmutex);
+   {    
     	if (strlen(puzzle) >= N) 
    	{	
       		++total;
       		job_t j1;
-      		j1.puzzleNo = total;
+      		j1.No = total;
       		input(puzzle,j1.board); 
                 job_queue.push(j1);
          }
-	pthread_mutex_unlock(&totalmutex);
    }
    if(DEBUG_MODE)
    printf("读文件完毕");
@@ -73,22 +85,22 @@ void* SolveFuction(void* args)
 	if(job_queue.size()<=0)
          	break;
         pthread_mutex_lock(&jobQueueMutex);
- 	job_t t=job_queue.front();
+ 	job_t j1=job_queue.front();
  	job_queue.pop();
         pthread_mutex_unlock(&jobQueueMutex);
 	
-	if (solve(0,&t)) 
+	if (solve(0,j1.board)) 
         {
            pthread_mutex_lock(&totalmutex);		
 	   ++total_solved;
     	   pthread_mutex_unlock(&totalmutex);
-	   result_queue.push(t);
+	   result_queue.push(j1);
         }
 	else 
         {  //solve返回了false 表示无解
            printf("No: ");
 	   for(int j=0;j<81;j++)
-          	printf("%d",t.board[j]);		
+          	printf("%d",j1.board[j]);		
 	   printf("\n");
         }
 			
@@ -101,56 +113,54 @@ int main(int argc, char* argv[])
   if (argv[1] != NULL)
   	numOfSolveThread = atoi(argv[1]);
 
-  char a[20];
-  cin>>a;
-  strncpy(fileName,a+2,(sizeof a)-2);
-  printf("fileName: %s", fileName);
-  fp = fopen(fileName, "r");
-  
   pthread_t ReaderThread;
   pthread_t SolveThread[numOfSolveThread];
+  int64_t start,end;
   
-  int64_t start = now();
+  while(scanf("%s",fileName)!=EOF)
+  {
+	if(DEBUG_MODE)
+  		printf("fileName: %s", fileName);
+	
+	if(pthread_create(&ReaderThread, NULL, ReaderFuction, NULL)!=0)
+  	{
+         	perror("pthread_create failed");
+         	exit(1);
+  	}
+	pthread_join(ReaderThread, NULL); 
 
-  if(pthread_create(&ReaderThread, NULL, ReaderFuction, NULL)!=0)
-  {
-         perror("pthread_create failed");
-         exit(1);
-  }
-  for(int i=0;i<numOfSolveThread;i++)
-  {
-    if(pthread_create(&SolveThread[i], NULL, SolveFuction, NULL)!=0)
-    {
-         perror("pthread_create failed");
-         exit(1);
-    }
-  }
+	start= now();
+	
+	for(int i=0;i<numOfSolveThread;i++)
+  	{
+    		if(pthread_create(&SolveThread[i], NULL, SolveFuction, NULL)!=0)
+    		{
+         		perror("pthread_create failed");
+         		exit(1);
+    		}
+  	}
+	
+	for(int i=0;i<numOfSolveThread;i++)
+      		pthread_join(SolveThread[i], NULL);  
+	
+        end = now();
+  	double sec = (end-start)/1000000.0;
+	if(DEBUG_MODE)
+  		printf("%f sec %f ms each %d\n", sec, 1000*sec/total, total_solved);
+	
+	
+	while(!result_queue.empty())
+  	{
+		job_t j1 = result_queue.top();
+		result_queue.pop();
+	        fprintf(stdout,"[%d] ",j1.No);
+        	for(int j=0;j<N;j++)
+            	fprintf(stdout,"%d",j1.board[j]);	
+		fprintf(stdout,"\n");
+	}
   
-  pthread_join(ReaderThread, NULL); 
-  for(int i=0;i<numOfSolveThread;i++)
-      pthread_join(SolveThread[i], NULL);  
-	
-  // SolveThread finish
-  FILE * fp1;
-  char resultFile[20];
-  printf("请输入结果文件名: ");
-  cin>>resultFile;
-  fp1 = fopen(resultFile, "r");
-  while(!result_queue.empty())
-  {
-	job_t j1 = result_queue.top();
-	result_queue.pop();
-	
-        for(int j=0;j<N;j++)
-            fprintf(stdout,"%d",j1.board[j]);	
-	fprintf(stdout,"\n");
    }
-  fclose(fp1);
-
-  int64_t end = now();
-  double sec = (end-start)/1000000.0;
-  printf("%f sec %f ms each %d\n", sec, 1000*sec/total, total_solved);
-  
+   
   return 0;
 }
 

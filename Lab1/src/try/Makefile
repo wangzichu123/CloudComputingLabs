@@ -3,7 +3,7 @@ CXXFLAGS+=-Wall -Wextra
 
 all: sudoku_solve
 
-sudoku_solve: mulmain.c  mulsudoku_dancing_links.cc
+sudoku_solve: main1.c  sudoku_dancing_links.cc
 	g++ -O2 -pthread -o $@ $^
 clean:	
-	-rm sudoku_slove
+	-rm sudoku_solve

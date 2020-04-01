@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 
-#include "mulsudoku.h"
+#include "sudoku.h"
 using namespace std;
 
 struct Node;
@@ -252,8 +252,8 @@ struct Dance
     }
 };
 
-bool solve_sudoku_dancing_links(int unused,job_t& myjob)
+bool solve_sudoku_dancing_links(int unused,int *myboard)
 {
-  Dance d(myjob.board);
+  Dance d(myboard);
   return d.solve();
 }

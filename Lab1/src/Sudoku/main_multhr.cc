@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 		// Initialize content and result
 		sudoku_content = (char (*)[N]) malloc(sudoku_Num*N*sizeof(int));
 		sudoku_result = (int (*)[N]) malloc(sudoku_Num*N*sizeof(int));
-		// Reset the file pointer to the head
+		// Reset the file pointer to the head, in order to read data
 		rewind(file_pointer);
 		int j=0;
 		// Record the content of sudoku
