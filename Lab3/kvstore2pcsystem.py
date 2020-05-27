@@ -79,34 +79,25 @@ if ROLE==0:
                 conn.send("+Ok\r\n".encode('utf-8'))
             #conn.close
             para=mydecode(message)
-            #print("I have receive A Job")
             if(para[0]=="SET" or para[0]=='GET' or para[0]=='DEL'):
-                #print("I am ready")
                 myconnect[0].sendall("Prepared".encode('utf-8'))
-                #mylog.append(str(state))
                 for item in para:
                     mylog.append(item)   
                 state=2
         #State2:get request
         elif(state==2):
-            #print("wait for Admit")
             conn,srcip=s.accept()
             message=conn.recv(1024).decode('utf-8') 
             #conn.close
             
             if(message=="Admit"):
-                #print("get Admit")
-                #print(mylog)
                 myconnect=connectall(ip,port)
                 if mylog[0]=="SET":
                     KV_Store[mylog[1]]=mylog[2]
                     myconnect[0].sendall("DONE +OK\r\n".encode('utf-8'))
                 elif mylog[0]=='GET' and KV_Store.get(mylog[1],0)!=0:
-                    #str_pes="DONE *1\r\n$"+str(len(KV_Store[mylog[1]]))+KV_Store[mylog[1]+"\r\n"
-                    #myconnect((ip[0],int(port[0])),"DONE *1\r\n")
                     myconnect[0].sendall(("DONE *1\r\n$"+str(len(KV_Store[mylog[1]]))+"\r\n"+KV_Store[mylog[1]]+"\r\n").encode('utf-8'))
                 elif mylog[0]=='GET' and KV_Store.get(mylog[1],0)==0:
-                    #myconnect((ip[0],int(port[0])),"DONE "+"*1\r\n$3\r\nnil\r\n")
                     myconnect[0].sendall(("DONE *1\r\n$3\r\nnil\r\n").encode('utf-8'))
                 elif mylog[0]=='DEL':
                     z=0
@@ -138,27 +129,20 @@ elif ROLE==1:
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
     s.bind((myip,int(myport)))
     s.listen(10)
-    #print("the num is"+str(len(ip)))
-    #global srcip
     i=0
     state=1
     para=[]
     while True:
-        #State1:initial
         if(state==1):
             conn,srcip=s.accept()
             message=conn.recv(1024).decode('utf-8')
-            #print("I have receive A message")
-            #print(message)
             if( message.startswith('*')):
                 clientconn=conn
                 myconect=connectall(ip,port)
                 para=mydecode(message)
-                #print("the message has"+str(len(para))+"len")
             if(para[0]=="SET" or para[0]=='GET' or para[0]=='DEL'):
                 for i in range(num):
                     myconect[i].sendall(message.encode('utf-8'))
-                #print("I have Send message to participant")
                 state=2
                 i=0
         elif(state==2):
@@ -166,26 +150,20 @@ elif ROLE==1:
             message=conn.recv(1024).decode('utf-8')
             if(message=="Prepared"):
                 i=i+1
-                #print("I have receive A prepared")
             if(i==len(ip)):
-                #print("try to send Admit")
                 myconect=connectall(ip,port)
                 for i in range(len(ip)):
                     myconect[i].sendall("Admit".encode('utf-8'))
                 state=3
                 i=0
         elif(state==3):
-            #print("try to acquire the result")
             conn,srcip=s.accept()
             message=conn.recv(1024).decode('utf-8')
             mes=message.split(' ')
             if(mes[0]=="DONE"):
                 i=i+1
-                #print("I have get a result")
                 mylog.append(mes[1])
             if(i==len(ip)):
-                #myconnect(srcip,mylog[0])
-                #print("I have get all result")
                 clientconn.sendall(mylog[0].encode('utf-8'))
                 mylog.clear()
                 state=1
